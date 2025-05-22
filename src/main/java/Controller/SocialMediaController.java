@@ -2,6 +2,12 @@
 
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+
+import java.util.Objects;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import Model.Account;
 import Model.Message;
 import Service.AccountService;
@@ -29,23 +35,50 @@ public class SocialMediaController {
      */
     public Javalin startAPI() {
         Javalin app = Javalin.create();
-        app.get("example-endpoint", this::exampleHandler);
-
-        app.get("/register" , accountService.registerAccountHandler());
-
+        app.post("/register" , this::registerAccountHandler);
+        app.post("/login", this::userLoginHandler);
+        app.post("/messages", this::createMessageHandler);
         return app;
     }
 
-    /**
-     * This is an example handler for an example endpoint.
-     * @param context The Javalin Context object manages information about both the HTTP request and response.
-     */
-    private void exampleHandler(Context context) {
-        context.json("sample text");
+    private void registerAccountHandler(Context ctx) throws JsonProcessingException{
+        ObjectMapper mapper = new ObjectMapper();
+        Account accountToInsert = mapper.readValue(ctx.body(), Account.class);
+        Account insertedAccount = accountService.registerAccount(accountToInsert);
+        if(Objects.nonNull(insertedAccount)){
+            ctx.json(mapper.writeValueAsString(insertedAccount));
+            ctx.status(200);
+        }
+        else{
+            ctx.status(400);
+        }
     }
 
-    private void registerAccountHandler(Context ctx){
-        ctx.json(AccountService.registerAccount());
+    private void userLoginHandler(Context ctx) throws JsonProcessingException{
+        ObjectMapper mapper = new ObjectMapper();
+        Account userToLogin = mapper.readValue(ctx.body(), Account.class);
+        Account loggedInUser = accountService.userLogin(userToLogin);
+        if(Objects.nonNull(loggedInUser)){
+            ctx.json(mapper.writeValueAsString(loggedInUser));
+            ctx.status(200);
+        }
+        else{
+            ctx.status(401);
+        }
+
+    }
+
+    private void createMessageHandler(Context ctx) throws JsonProcessingException{
+        ObjectMapper mapper = new ObjectMapper();
+        Message message = mapper.readValue(ctx.body(),Message.class);
+        Message persistedMessage = messageService.addMessage(message);
+        if(Objects.nonNull(persistedMessage)){
+            ctx.json(mapper.writeValueAsString(persistedMessage));
+            ctx.status(200);
+        }
+        else{
+            ctx.status(401);
+        }
     }
 
 
