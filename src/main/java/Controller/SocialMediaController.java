@@ -40,7 +40,11 @@ public class SocialMediaController {
         app.post("/login", this::userLoginHandler);
         app.post("/messages", this::createMessageHandler);
         app.get("/messages", this::getAllMessagesHandler);
-        app.get("//{messages_id}", this::getAllMessagesByIdHandler);
+        app.get("/messages/{message_id}", this::getAllMessagesByIdHandler);
+        app.get("/accounts/{account_id}/messages", this::getAllMessagesByAccountIdHandler);
+        app.patch("/messages/{message_id}", this::updateMessageHandler);
+        app.delete("messages/{message_id}", this::deleteMessageHandler);
+        
         return app;
     }
 
@@ -87,14 +91,53 @@ public class SocialMediaController {
     private void getAllMessagesHandler(Context ctx) throws JsonProcessingException{
         List<Message> messages = messageService.getAllMessages();
         ctx.json(messages);
-        ctx.status(200);
+        
     }
     
     private void getAllMessagesByIdHandler(Context ctx) throws JsonProcessingException{
        int messageId = Integer.parseInt(ctx.pathParam("message_id"));
        Message message = messageService.getMessageById(messageId);
+       if(message != null){
         ctx.json(message);
-        ctx.status(200);
+       }else {
+        ctx.result("");
+        
+       }
     }
+
+    private void updateMessageHandler(Context ctx) throws JsonProcessingException{
+        ObjectMapper mapper = new ObjectMapper();
+        int messageId = Integer.parseInt(ctx.pathParam("message_id"));
+
+        Message messageUpdate = mapper.readValue(ctx.body(), Message.class);
+
+        Message updatedMessage = messageService.updateMessage(messageId, messageUpdate);
+
+        if(updatedMessage != null){
+            ctx.json(updatedMessage);
+            ctx.status(200);
+        }else{
+            ctx.status(400);
+        }
+    }
+
+    private void deleteMessageHandler(Context ctx)throws JsonProcessingException{
+        int messageId = Integer.parseInt(ctx.pathParam("message_id"));
+
+        Message deletedMessage = messageService.deletMessage(messageId);
+
+        if(deletedMessage != null){
+            ctx.json(deletedMessage);
+        }else{
+            ctx.result("");
+        }
+        ctx.status(200);
+     }
+
+     private void getAllMessagesByAccountIdHandler(Context ctx)throws JsonProcessingException{
+        int account_id = Integer.parseInt(ctx.pathParam("account_id"));
+        List<Message> messages = messageService.getAllMessagesByAccountId(account_id);
+        ctx.json(messages);
+     }
 
 }

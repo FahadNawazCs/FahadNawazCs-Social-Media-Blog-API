@@ -25,6 +25,11 @@ public class AccountService {
         return accountDAO.getAllAccounts();
     }
 
+    // Get account by account id
+    public Account getAccountById(int account_id){
+        return accountDAO.getAccountById(account_id);
+    }
+
     // Registering a User
     public Account registerAccount(Account accountToInsert){
 
